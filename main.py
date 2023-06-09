@@ -54,9 +54,12 @@ def plot_individual_stock(stock_symbol):
     output_data_path = output_dir + '/historical_data'
     output_plot_path = output_dir + '/' + stock_symbol + '.png'
     historical_stock_df = pd.read_csv(output_data_path)
-    historical_stock_df.plot(x='Date', y=['Open', 'High', 'Low', 'Close'])
-    plt.savefig(output_plot_path)
-    print('Successfully saved historical stock data plot')
+    try:
+        historical_stock_df.plot(x='Date', y=['Open', 'High', 'Low', 'Close'])
+        plt.savefig(output_plot_path)
+        print('Successfully saved historical stock data plot for stock: ' + stock_symbol)
+    except Exception as e:
+        print('Plotting Failed for stock: ' + stock_symbol + ', due to: ' + e)
 
 
 def plot_and_save_historical_stock_data():
