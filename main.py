@@ -1,4 +1,5 @@
 # This is a sample Python script.
+import json
 
 # Press ⇧F10 to execute it or replace it with your code.
 # Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
@@ -9,7 +10,7 @@ import os
 import matplotlib.pyplot as plt
 
 
-def download_stock_data(stock_symbol):
+def download_individual_stock_data(stock_symbol):
     historical_data = yf.download(stock_symbol)
     output_dir = os.getcwd() + '/StockData/Output/' + stock_symbol
     if not os.path.exists(output_dir):
@@ -42,22 +43,23 @@ def deduplicate_stock_symbols():
 
 def download_historical_stock_data():
     global stock_symbol
-    failed_download_list = []
+    failed_download_dict = []
     failed_download_file_path = os.getcwd() + '/StockData/Output/FailedDownload'
     if not os.path.exists(failed_download_file_path):
         os.mkdir(failed_download_file_path)
     stocks_df = pd.read_csv(os.getcwd() + '/StockData/Output/DedupedStockSymbols')
     for ind in stocks_df.index:
+        if stocks_df['Source'][ind] == 'NSE':
+            stock_symbol = str(stocks_df['Stock Symbol'][ind]) + '.NS'
+        elif stocks_df['Source'][ind] == 'BSE':
+            stock_symbol = str(stocks_df['Stock Symbol'][ind]) + '.BO'
         try:
-            if stocks_df['Source'][ind] == 'NSE':
-                stock_symbol = stocks_df['Stock Symbol'][ind] + '.NS'
-            elif stocks_df['Source'][ind] == 'BSE':
-                stock_symbol = stocks_df['Stock Symbol'][ind] + '.BO'
-            download_stock_data(stock_symbol)
+            download_individual_stock_data(stock_symbol)
         except Exception as e:
             print('Could not download historical data for symbol: ' + stock_symbol + ', due to: ' + str(e))
-            failed_download_list.append(stock_symbol)
-    write_list_to_file(failed_download_list, failed_download_file_path + '/failed_items')
+            failed_download_dict[stock_symbol] = e
+    print('Number of stocks for which download failed is: ' + str(len(failed_download_dict)))
+    write_dict_to_file(failed_download_dict, failed_download_file_path + '/failed_items')
 
 
 def plot_individual_stock(stock_symbol):
@@ -71,33 +73,33 @@ def plot_individual_stock(stock_symbol):
         print('Successfully saved historical stock data plot for stock: ' + stock_symbol)
     except Exception as e:
         print('Plotting Failed for stock: ' + stock_symbol + ', due to: ' + str(e))
+        raise e
 
 
 def plot_and_save_historical_stock_data():
     global stock_symbol
-    failed_to_plot_list = []
+    failed_to_plot_dict = {}
     failed_plot_file_path = os.getcwd() + '/StockData/Output/FailedPlot'
     if not os.path.exists(failed_plot_file_path):
         os.mkdir(failed_plot_file_path)
     stocks_df = pd.read_csv(os.getcwd() + '/StockData/Output/DedupedStockSymbols')
     for ind in stocks_df.index:
+        if stocks_df['Source'][ind] == 'NSE':
+            stock_symbol = str(stocks_df['Stock Symbol'][ind]) + '.NS'
+        elif stocks_df['Source'][ind] == 'BSE':
+            stock_symbol = str(stocks_df['Stock Symbol'][ind]) + '.BO'
         try:
-            if stocks_df['Source'][ind] == 'NSE':
-                stock_symbol = stocks_df['Stock Symbol'][ind] + '.NS'
-            elif stocks_df['Source'][ind] == 'BSE':
-                stock_symbol = stocks_df['Stock Symbol'][ind] + '.BO'
             plot_individual_stock(stock_symbol)
         except Exception as e:
             print('Could not plot symbol: ' + stock_symbol + ', due to: ' + str(e))
-            failed_to_plot_list.append(stock_symbol)
-    write_list_to_file(failed_to_plot_list, failed_plot_file_path + '/failed_items')
+            failed_to_plot_dict[stock_symbol] = e
+    print('Number of stocks failed to plot is: ' + str(len(failed_to_plot_dict)))
+    write_dict_to_file(failed_to_plot_dict, failed_plot_file_path + '/failed_items')
 
 
-def write_list_to_file(item_list, file_name):
-    file = open(file_name, 'w')
-    for item in item_list:
-        file.write(item + "\n")
-    file.close()
+def write_dict_to_file(kv_dict, file_name):
+    with open(file_name, 'w') as output_file:
+        output_file.write(str(kv_dict))
 
 
 if __name__ == '__main__':
