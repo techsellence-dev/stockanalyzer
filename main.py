@@ -41,12 +41,23 @@ def deduplicate_stock_symbols():
 
 
 def download_historical_stock_data():
+    global stock_symbol
+    failed_download_list = []
+    failed_download_file_path = os.getcwd() + '/StockData/Output/FailedDownload'
+    if not os.path.exists(failed_download_file_path):
+        os.mkdir(failed_download_file_path)
     stocks_df = pd.read_csv(os.getcwd() + '/StockData/Output/DedupedStockSymbols')
     for ind in stocks_df.index:
-        if stocks_df['Source'][ind] == 'NSE':
-            download_stock_data(stocks_df['Stock Symbol'][ind] + '.NS')
-        elif stocks_df['Source'][ind] == 'BSE':
-            download_stock_data(stocks_df['Stock Symbol'][ind] + '.BO')
+        try:
+            if stocks_df['Source'][ind] == 'NSE':
+                stock_symbol = stocks_df['Stock Symbol'][ind] + '.NS'
+            elif stocks_df['Source'][ind] == 'BSE':
+                stock_symbol = stocks_df['Stock Symbol'][ind] + '.BO'
+            download_stock_data(stock_symbol)
+        except Exception as e:
+            print('Could not download historical data for symbol: ' + stock_symbol + ', due to: ' + str(e))
+            failed_download_list.append(stock_symbol)
+    write_list_to_file(failed_download_list, failed_download_file_path + '/failed_items')
 
 
 def plot_individual_stock(stock_symbol):
@@ -64,6 +75,10 @@ def plot_individual_stock(stock_symbol):
 
 def plot_and_save_historical_stock_data():
     global stock_symbol
+    failed_to_plot_list = []
+    failed_plot_file_path = os.getcwd() + '/StockData/Output/FailedPlot'
+    if not os.path.exists(failed_plot_file_path):
+        os.mkdir(failed_plot_file_path)
     stocks_df = pd.read_csv(os.getcwd() + '/StockData/Output/DedupedStockSymbols')
     for ind in stocks_df.index:
         try:
@@ -74,6 +89,15 @@ def plot_and_save_historical_stock_data():
             plot_individual_stock(stock_symbol)
         except Exception as e:
             print('Could not plot symbol: ' + stock_symbol + ', due to: ' + str(e))
+            failed_to_plot_list.append(stock_symbol)
+    write_list_to_file(failed_to_plot_list, failed_plot_file_path + '/failed_items')
+
+
+def write_list_to_file(item_list, file_name):
+    file = open(file_name, 'w')
+    for item in item_list:
+        file.write(item + "\n")
+    file.close()
 
 
 if __name__ == '__main__':
