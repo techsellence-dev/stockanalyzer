@@ -59,16 +59,22 @@ def plot_individual_stock(stock_symbol):
         plt.savefig(output_plot_path)
         print('Successfully saved historical stock data plot for stock: ' + stock_symbol)
     except Exception as e:
-        print('Plotting Failed for stock: ' + stock_symbol + ', due to: ' + e)
+        print('Plotting Failed for stock: ' + stock_symbol + ', due to: ' + str(e))
 
 
 def plot_and_save_historical_stock_data():
+    global stock_symbol
     stocks_df = pd.read_csv(os.getcwd() + '/StockData/Output/DedupedStockSymbols')
     for ind in stocks_df.index:
-        if stocks_df['Source'][ind] == 'NSE':
-            plot_individual_stock(stocks_df['Stock Symbol'][ind] + '.NS')
-        elif stocks_df['Source'][ind] == 'BSE':
-            plot_individual_stock(stocks_df['Stock Symbol'][ind] + '.BO')
+        try:
+            if stocks_df['Source'][ind] == 'NSE':
+                stock_symbol = stocks_df['Stock Symbol'][ind] + '.NS'
+            elif stocks_df['Source'][ind] == 'BSE':
+                stock_symbol = stocks_df['Stock Symbol'][ind] + '.BO'
+            plot_individual_stock(stock_symbol)
+        except Exception as e:
+            print('Could not plot symbol: ' + stock_symbol + ', due to: ' + str(e))
+
 
 if __name__ == '__main__':
     deduplicate_stock_symbols()
