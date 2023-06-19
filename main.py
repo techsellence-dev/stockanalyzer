@@ -9,6 +9,8 @@ import yfinance as yf
 import os
 import matplotlib.pyplot as plt
 
+import breakout_point_finder
+
 
 def download_individual_stock_data(stock_symbol):
     historical_data = yf.download(stock_symbol)
@@ -43,7 +45,7 @@ def deduplicate_stock_symbols():
 
 def download_historical_stock_data():
     global stock_symbol
-    failed_download_dict = []
+    failed_download_dict = {}
     failed_download_file_path = os.getcwd() + '/StockData/Output/FailedDownload'
     if not os.path.exists(failed_download_file_path):
         os.mkdir(failed_download_file_path)
@@ -102,7 +104,30 @@ def write_dict_to_file(kv_dict, file_name):
         output_file.write(str(kv_dict))
 
 
+def find_and_save_breakout_points():
+    row_list = []
+    global stock_symbol
+    stocks_df = pd.read_csv(os.getcwd() + '/StockData/Output/DedupedStockSymbols')
+    for ind in stocks_df.index:
+        if stocks_df['Source'][ind] == 'NSE':
+            stock_symbol = str(stocks_df['Stock Symbol'][ind]) + '.NS'
+        elif stocks_df['Source'][ind] == 'BSE':
+            stock_symbol = str(stocks_df['Stock Symbol'][ind]) + '.BO'
+        try:
+            breakout_details_dict = {'Stock Symbol': stock_symbol}
+            breakout_details_dict.update(breakout_point_finder.find_breakout_point(stock_symbol))
+            row_list.append(breakout_details_dict)
+        except Exception as e:
+            print('Could not derive past max prices for symbol: ' + stock_symbol + ' due to data unavailability, '
+                                                                                   'exception: ' + str(e))
+    df_with_past_max_data = pd.DataFrame(row_list)
+    df_with_past_max_data.to_csv(os.getcwd() + '/StockData/Output/BreakoutPointData.csv')
+    print('Successfully wrote breakout point daa for all listed NSE and BSE stocks to: '
+          + os.getcwd() + '/StockData/Output/BreakoutPointData.csv')
+
+
 if __name__ == '__main__':
     deduplicate_stock_symbols()
     download_historical_stock_data()
-    plot_and_save_historical_stock_data()
+    # plot_and_save_historical_stock_data()
+    find_and_save_breakout_points()
