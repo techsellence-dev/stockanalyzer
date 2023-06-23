@@ -1,15 +1,16 @@
 # This is a sample Python script.
-import json
 
 # Press ⇧F10 to execute it or replace it with your code.
 # Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
 
+import os
+
+import matplotlib.pyplot as plt
 import pandas as pd
 import yfinance as yf
-import os
-import matplotlib.pyplot as plt
 
 import breakout_point_finder
+import ticker_info_updater
 
 
 def download_individual_stock_data(stock_symbol):
@@ -115,6 +116,7 @@ def find_and_save_breakout_points():
             stock_symbol = str(stocks_df['Stock Symbol'][ind]) + '.BO'
         try:
             breakout_details_dict = {'Stock Symbol': stock_symbol}
+            breakout_details_dict.update(ticker_info_updater.update_ticker_info(stock_symbol))
             breakout_details_dict.update(breakout_point_finder.find_breakout_point(stock_symbol))
             row_list.append(breakout_details_dict)
         except Exception as e:
