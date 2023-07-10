@@ -13,7 +13,7 @@ import breakout_point_finder
 import ticker_info_updater
 
 
-def download_individual_stock_data(stock_symbol):
+def download_and_save_individual_stock_data(stock_symbol):
     historical_data = yf.download(stock_symbol)
     output_dir = os.getcwd() + '/StockData/Output/' + stock_symbol
     if not os.path.exists(output_dir):
@@ -32,11 +32,13 @@ def deduplicate_stock_symbols():
     print('Total number of BSE stocks: ' + str(num_bse_stocks))
 
     nse_stock_symbols = nse_stocks['Symbol'].to_frame()
+    nse_stock_symbols['Industry'] = 'N/A'
     nse_stock_symbols['Source'] = 'NSE'
-    bse_stock_symbols = bse_stocks['Issuer Name'].to_frame()
+    bse_stock_symbols = pd.DataFrame(bse_stocks, columns=['Issuer Name', 'ISIN No'])
     bse_stock_symbols['Source'] = 'BSE'
     nse_stock_symbols.rename(columns={'Symbol': 'Stock Symbol'}, inplace=True)
     bse_stock_symbols.rename(columns={'Issuer Name': 'Stock Symbol'}, inplace=True)
+    bse_stock_symbols.rename(columns={'ISIN No': 'Industry'}, inplace=True)
     concatenated_stock_symbols = pd.concat([nse_stock_symbols, bse_stock_symbols])
     deduped_stock_symbols = concatenated_stock_symbols.drop_duplicates(subset=['Stock Symbol'],
                                                                        keep='first').reset_index(drop=True)
@@ -57,7 +59,7 @@ def download_historical_stock_data():
         elif stocks_df['Source'][ind] == 'BSE':
             stock_symbol = str(stocks_df['Stock Symbol'][ind]) + '.BO'
         try:
-            download_individual_stock_data(stock_symbol)
+            download_and_save_individual_stock_data(stock_symbol)
         except Exception as e:
             print('Could not download historical data for symbol: ' + stock_symbol + ', due to: ' + str(e))
             failed_download_dict[stock_symbol] = e
@@ -115,7 +117,8 @@ def find_and_save_breakout_points():
         elif stocks_df['Source'][ind] == 'BSE':
             stock_symbol = str(stocks_df['Stock Symbol'][ind]) + '.BO'
         try:
-            breakout_details_dict = {'Stock Symbol': stock_symbol}
+            industry = stocks_df['Industry'][ind]
+            breakout_details_dict = {'Stock Symbol': stock_symbol, 'Industry': industry}
             breakout_details_dict.update(ticker_info_updater.update_ticker_info(stock_symbol))
             breakout_details_dict.update(breakout_point_finder.find_breakout_point(stock_symbol))
             row_list.append(breakout_details_dict)
