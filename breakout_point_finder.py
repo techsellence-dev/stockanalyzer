@@ -8,7 +8,11 @@ from constants.break_even_calculation_constants import ALL_TIME_MAX, ALL_TIME_MA
     LAST_FOUR_YEARS_MAX_DATE, LAST_FIVE_YEARS_MAX, LAST_FIVE_YEARS_MAX_DATE, LAST_ONE_YEAR_MAX_DATE, CURRENT_PRICE, \
     ALL_TIME_MIN, ALL_TIME_MIN_DATE, PRICE_DIFF_ATH, DISTANCE_FROM_ATH, PRICE_DIFF_ATL, DISTANCE_FROM_ATL, \
     PRICE_DIFF_1YH, DISTANCE_FROM_1YH, PRICE_DIFF_2YH, DISTANCE_FROM_2YH, PRICE_DIFF_3YH, DISTANCE_FROM_3YH, \
-    PRICE_DIFF_4YH, DISTANCE_FROM_4YH, PRICE_DIFF_5YH, DISTANCE_FROM_5YH
+    PRICE_DIFF_4YH, DISTANCE_FROM_4YH, PRICE_DIFF_5YH, DISTANCE_FROM_5YH, LAST_ONE_YEAR_MIN, LAST_ONE_YEAR_MIN_DATE, \
+    PRICE_DIFF_1YL, DISTANCE_FROM_1YL, LAST_TWO_YEARS_MIN, LAST_TWO_YEARS_MIN_DATE, PRICE_DIFF_2YL, DISTANCE_FROM_2YL, \
+    LAST_THREE_YEARS_MIN, LAST_THREE_YEARS_MIN_DATE, PRICE_DIFF_3YL, DISTANCE_FROM_3YL, LAST_FOUR_YEARS_MIN, \
+    LAST_FOUR_YEARS_MIN_DATE, PRICE_DIFF_4YL, DISTANCE_FROM_4YL, LAST_FIVE_YEARS_MIN, LAST_FIVE_YEARS_MIN_DATE, \
+    PRICE_DIFF_5YL, DISTANCE_FROM_5YL
 
 
 def get_past_max(historical_stock_df, grouped_by_year_historical_df, n):
@@ -22,6 +26,19 @@ def get_past_max(historical_stock_df, grouped_by_year_historical_df, n):
         drop=True)
     past_n_years_max_date = past_n_years_max_date_df.iloc[0]['Complete Date']
     return past_n_years_max_value, past_n_years_max_date
+
+
+def get_past_min(historical_stock_df, grouped_by_year_historical_df, n):
+    current_year = datetime.date.today().year
+    past_n_years_df = grouped_by_year_historical_df[grouped_by_year_historical_df.Date >= current_year - n]
+    past_n_years_min_df = past_n_years_df[past_n_years_df.Close == past_n_years_df.Close.min()].reset_index(drop=True)
+    past_n_years_min_value = past_n_years_min_df.iloc[0]['Close']
+    past_n_years_min_date_df = historical_stock_df.loc[(historical_stock_df['Date'].dt.year >= current_year - n) &
+                                                       (
+                                                               historical_stock_df.Close == past_n_years_min_value)].reset_index(
+        drop=True)
+    past_n_years_min_date = past_n_years_min_date_df.iloc[0]['Complete Date']
+    return past_n_years_min_value, past_n_years_min_date
 
 
 def get_all_time_max(historical_stock_df):
@@ -39,7 +56,7 @@ def get_all_time_min(historical_stock_df):
 
 
 def find_difference_from_current_price(past_price, current_price):
-    diff = round((current_price - past_price)/current_price * 100, 2)
+    diff = round((current_price - past_price) / past_price * 100, 2)
     return str(diff) + '%'
 
 
@@ -105,6 +122,37 @@ def find_breakout_point(stock_symbol):
         past_data_dict[LAST_FIVE_YEARS_MAX_DATE] = five_year_max_date
         past_data_dict[PRICE_DIFF_5YH] = find_difference_from_current_price(five_year_max_value, current_price)
         past_data_dict[DISTANCE_FROM_5YH] = find_difference_from_current_date(five_year_max_date)
+
+        # Past one year min
+        one_year_min_value, one_year_min_date = get_past_min(historical_stock_df, grouped_by_year_historical_df, 1)
+        past_data_dict[LAST_ONE_YEAR_MIN] = one_year_min_value
+        past_data_dict[LAST_ONE_YEAR_MIN_DATE] = one_year_min_date
+        past_data_dict[PRICE_DIFF_1YL] = find_difference_from_current_price(one_year_min_value, current_price)
+        past_data_dict[DISTANCE_FROM_1YL] = find_difference_from_current_date(one_year_min_date)
+        # Past two years min
+        two_year_min_value, two_year_min_date = get_past_min(historical_stock_df, grouped_by_year_historical_df, 2)
+        past_data_dict[LAST_TWO_YEARS_MIN] = two_year_min_value
+        past_data_dict[LAST_TWO_YEARS_MIN_DATE] = two_year_min_date
+        past_data_dict[PRICE_DIFF_2YL] = find_difference_from_current_price(two_year_min_value, current_price)
+        past_data_dict[DISTANCE_FROM_2YL] = find_difference_from_current_date(two_year_min_date)
+        # Past three years min
+        three_year_min_value, three_year_min_date = get_past_min(historical_stock_df, grouped_by_year_historical_df, 3)
+        past_data_dict[LAST_THREE_YEARS_MIN] = three_year_min_value
+        past_data_dict[LAST_THREE_YEARS_MIN_DATE] = three_year_min_date
+        past_data_dict[PRICE_DIFF_3YL] = find_difference_from_current_price(three_year_min_value, current_price)
+        past_data_dict[DISTANCE_FROM_3YL] = find_difference_from_current_date(three_year_min_date)
+        # Past four years min
+        four_year_min_value, four_year_min_date = get_past_min(historical_stock_df, grouped_by_year_historical_df, 4)
+        past_data_dict[LAST_FOUR_YEARS_MIN] = four_year_min_value
+        past_data_dict[LAST_FOUR_YEARS_MIN_DATE] = four_year_min_date
+        past_data_dict[PRICE_DIFF_4YL] = find_difference_from_current_price(four_year_min_value, current_price)
+        past_data_dict[DISTANCE_FROM_4YL] = find_difference_from_current_date(four_year_min_date)
+        # Past five years min
+        five_year_min_value, five_year_min_date = get_past_min(historical_stock_df, grouped_by_year_historical_df, 5)
+        past_data_dict[LAST_FIVE_YEARS_MIN] = five_year_min_value
+        past_data_dict[LAST_FIVE_YEARS_MIN_DATE] = five_year_min_date
+        past_data_dict[PRICE_DIFF_5YL] = find_difference_from_current_price(five_year_min_value, current_price)
+        past_data_dict[DISTANCE_FROM_5YL] = find_difference_from_current_date(five_year_min_date)
 
         print('Stock Symbol: ' + stock_symbol + ', past max data: ' + str(past_data_dict))
         return past_data_dict
