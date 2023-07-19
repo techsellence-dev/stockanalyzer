@@ -12,6 +12,17 @@ import yfinance as yf
 import breakout_point_finder
 import ticker_info_updater
 
+from constants.break_even_calculation_constants import ALL_TIME_MAX, ALL_TIME_MAX_DATE, LAST_ONE_YEAR_MAX, \
+    LAST_TWO_YEARS_MAX, LAST_TWO_YEARS_MAX_DATE, LAST_THREE_YEARS_MAX_DATE, LAST_THREE_YEARS_MAX, LAST_FOUR_YEARS_MAX, \
+    LAST_FOUR_YEARS_MAX_DATE, LAST_FIVE_YEARS_MAX, LAST_FIVE_YEARS_MAX_DATE, LAST_ONE_YEAR_MAX_DATE, CURRENT_PRICE, \
+    ALL_TIME_MIN, ALL_TIME_MIN_DATE, PRICE_DIFF_ATH, DISTANCE_FROM_ATH, PRICE_DIFF_ATL, DISTANCE_FROM_ATL, \
+    PRICE_DIFF_1YH, DISTANCE_FROM_1YH, PRICE_DIFF_2YH, DISTANCE_FROM_2YH, PRICE_DIFF_3YH, DISTANCE_FROM_3YH, \
+    PRICE_DIFF_4YH, DISTANCE_FROM_4YH, PRICE_DIFF_5YH, DISTANCE_FROM_5YH, LAST_ONE_YEAR_MIN, LAST_ONE_YEAR_MIN_DATE, \
+    PRICE_DIFF_1YL, DISTANCE_FROM_1YL, LAST_TWO_YEARS_MIN, LAST_TWO_YEARS_MIN_DATE, PRICE_DIFF_2YL, DISTANCE_FROM_2YL, \
+    LAST_THREE_YEARS_MIN, LAST_THREE_YEARS_MIN_DATE, PRICE_DIFF_3YL, DISTANCE_FROM_3YL, LAST_FOUR_YEARS_MIN, \
+    LAST_FOUR_YEARS_MIN_DATE, PRICE_DIFF_4YL, DISTANCE_FROM_4YL, LAST_FIVE_YEARS_MIN, LAST_FIVE_YEARS_MIN_DATE, \
+    PRICE_DIFF_5YL, DISTANCE_FROM_5YL
+
 
 def download_and_save_individual_stock_data(stock_symbol):
     historical_data = yf.download(stock_symbol)
@@ -125,14 +136,50 @@ def find_and_save_breakout_points():
         except Exception as e:
             print('Could not derive past max prices for symbol: ' + stock_symbol + ' due to data unavailability, '
                                                                                    'exception: ' + str(e))
-    df_with_past_max_data = pd.DataFrame(row_list)
-    df_with_past_max_data.to_csv(os.getcwd() + '/StockData/Output/BreakoutPointData.csv')
-    print('Successfully wrote breakout point daa for all listed NSE and BSE stocks to: '
-          + os.getcwd() + '/StockData/Output/BreakoutPointData.csv')
+    output_df = pd.DataFrame(row_list)
+    output_df_with_past_at_data = output_df[['Stock Symbol', 'Industry', 'Current Price', ALL_TIME_MAX, ALL_TIME_MAX_DATE, PRICE_DIFF_ATH, DISTANCE_FROM_ATH,
+                                             ALL_TIME_MIN, ALL_TIME_MIN_DATE, PRICE_DIFF_ATL, DISTANCE_FROM_ATL]]
+
+    output_df_with_past_1Y_data = output_df[
+        ['Stock Symbol', 'Industry', 'Current Price',
+         LAST_ONE_YEAR_MAX, LAST_ONE_YEAR_MAX_DATE, PRICE_DIFF_1YH, DISTANCE_FROM_1YH,
+         LAST_ONE_YEAR_MIN, LAST_ONE_YEAR_MIN_DATE, PRICE_DIFF_1YL, DISTANCE_FROM_1YL]]
+
+    output_df_with_past_2Y_data = output_df[
+        ['Stock Symbol', 'Industry', 'Current Price',
+         LAST_TWO_YEARS_MAX, LAST_TWO_YEARS_MAX_DATE, PRICE_DIFF_2YH, DISTANCE_FROM_2YH,
+         LAST_TWO_YEARS_MIN, LAST_TWO_YEARS_MIN_DATE, PRICE_DIFF_2YL, DISTANCE_FROM_2YL]]
+
+    output_df_with_past_3Y_data = output_df[
+        ['Stock Symbol', 'Industry', 'Current Price',
+         LAST_THREE_YEARS_MAX, LAST_THREE_YEARS_MAX_DATE, PRICE_DIFF_3YH, DISTANCE_FROM_3YH,
+         LAST_THREE_YEARS_MIN, LAST_THREE_YEARS_MIN_DATE, PRICE_DIFF_3YL, DISTANCE_FROM_3YL]]
+
+    output_df_with_past_4Y_data = output_df[
+        ['Stock Symbol', 'Industry', 'Current Price',
+         LAST_FOUR_YEARS_MAX, LAST_FOUR_YEARS_MAX_DATE, PRICE_DIFF_4YH, DISTANCE_FROM_4YH,
+         LAST_FOUR_YEARS_MIN, LAST_FOUR_YEARS_MIN_DATE, PRICE_DIFF_4YL, DISTANCE_FROM_4YL]]
+
+    output_df_with_past_5Y_data = output_df[
+        ['Stock Symbol', 'Industry', 'Current Price',
+         LAST_FIVE_YEARS_MAX, LAST_FIVE_YEARS_MAX_DATE, PRICE_DIFF_5YH, DISTANCE_FROM_5YH,
+         LAST_FIVE_YEARS_MIN, LAST_FIVE_YEARS_MIN_DATE, PRICE_DIFF_5YL, DISTANCE_FROM_5YL
+       ]]
+
+    with pd.ExcelWriter(os.getcwd() + '/StockData/Output/BreakoutPointData.xlsx') as writer:
+        output_df_with_past_at_data.to_excel(writer, sheet_name="All Time Stats", index=False)
+        output_df_with_past_5Y_data.to_excel(writer, sheet_name="Past 5 Years Stats", index=False)
+        output_df_with_past_4Y_data.to_excel(writer, sheet_name="Past 4 Years Stats", index=False)
+        output_df_with_past_3Y_data.to_excel(writer, sheet_name="Past 3 Years Stats", index=False)
+        output_df_with_past_2Y_data.to_excel(writer, sheet_name="Past 2 Years Stats", index=False)
+        output_df_with_past_1Y_data.to_excel(writer, sheet_name="Past 1 Year Stats", index=False)
+    print('Successfully wrote breakout point data for all listed NSE and BSE stocks to: '
+          + os.getcwd() + '/StockData/Output/BreakoutPointData.xlsx')
 
 
 if __name__ == '__main__':
-    deduplicate_stock_symbols()
-    download_historical_stock_data()
+    # deduplicate_stock_symbols()
+    # download_historical_stock_data()
     # plot_and_save_historical_stock_data()
     find_and_save_breakout_points()
+
