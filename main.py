@@ -166,7 +166,7 @@ def find_and_save_breakout_points():
          LAST_FIVE_YEARS_MIN, LAST_FIVE_YEARS_MIN_DATE, PRICE_DIFF_5YL, DISTANCE_FROM_5YL
        ]]
 
-    with pd.ExcelWriter(os.getcwd() + '/StockData/Output/BreakoutPointData.xlsx') as writer:
+    with pd.ExcelWriter(os.getcwd() + '/StockData/Output/1_BreakoutPointData.xlsx') as writer:
         output_df_with_past_at_data.to_excel(writer, sheet_name="All Time Stats", index=False)
         output_df_with_past_5Y_data.to_excel(writer, sheet_name="Past 5 Years Stats", index=False)
         output_df_with_past_4Y_data.to_excel(writer, sheet_name="Past 4 Years Stats", index=False)
