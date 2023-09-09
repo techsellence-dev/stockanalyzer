@@ -118,7 +118,7 @@ def write_dict_to_file(kv_dict, file_name):
         output_file.write(str(kv_dict))
 
 
-def find_and_save_breakout_points():
+def find_and_save_breakout_points(week_list_for_past_stats, week_list_for_price_movement):
     row_list = []
     global stock_symbol
     stocks_df = pd.read_csv(os.getcwd() + '/StockData/Output/DedupedStockSymbols')
@@ -131,14 +131,17 @@ def find_and_save_breakout_points():
             industry = stocks_df['Industry'][ind]
             breakout_details_dict = {'Stock Symbol': stock_symbol, 'Industry': industry}
             breakout_details_dict.update(ticker_info_updater.update_ticker_info(stock_symbol))
-            breakout_details_dict.update(breakout_point_finder.find_breakout_point(stock_symbol))
+            breakout_details_dict.update(breakout_point_finder.find_breakout_point(stock_symbol,
+                        week_list_for_past_stats, week_list_for_price_movement))
             row_list.append(breakout_details_dict)
         except Exception as e:
             print('Could not derive past max prices for symbol: ' + stock_symbol + ' due to data unavailability, '
                                                                                    'exception: ' + str(e))
     output_df = pd.DataFrame(row_list)
-    output_df_with_past_at_data = output_df[['Stock Symbol', 'Industry', 'Current Price', ALL_TIME_MAX, ALL_TIME_MAX_DATE, PRICE_DIFF_ATH, DISTANCE_FROM_ATH,
-                                             ALL_TIME_MIN, ALL_TIME_MIN_DATE, PRICE_DIFF_ATL, DISTANCE_FROM_ATL]]
+    output_df_with_past_at_data = output_df[
+        ['Stock Symbol', 'Industry', 'Current Price', ALL_TIME_MAX, ALL_TIME_MAX_DATE, PRICE_DIFF_ATH,
+         DISTANCE_FROM_ATH,
+         ALL_TIME_MIN, ALL_TIME_MIN_DATE, PRICE_DIFF_ATL, DISTANCE_FROM_ATL]]
 
     output_df_with_past_1Y_data = output_df[
         ['Stock Symbol', 'Industry', 'Current Price',
@@ -164,7 +167,7 @@ def find_and_save_breakout_points():
         ['Stock Symbol', 'Industry', 'Current Price',
          LAST_FIVE_YEARS_MAX, LAST_FIVE_YEARS_MAX_DATE, PRICE_DIFF_5YH, DISTANCE_FROM_5YH,
          LAST_FIVE_YEARS_MIN, LAST_FIVE_YEARS_MIN_DATE, PRICE_DIFF_5YL, DISTANCE_FROM_5YL
-       ]]
+         ]]
 
     with pd.ExcelWriter(os.getcwd() + '/StockData/Output/1_BreakoutPointData.xlsx') as writer:
         output_df_with_past_at_data.to_excel(writer, sheet_name="All Time Stats", index=False)
@@ -173,13 +176,41 @@ def find_and_save_breakout_points():
         output_df_with_past_3Y_data.to_excel(writer, sheet_name="Past 3 Years Stats", index=False)
         output_df_with_past_2Y_data.to_excel(writer, sheet_name="Past 2 Years Stats", index=False)
         output_df_with_past_1Y_data.to_excel(writer, sheet_name="Past 1 Year Stats", index=False)
+
+        for n in week_list_for_past_stats:
+            LAST_N_WEEKS_MAX_VALUE = 'Last ' + str(n) + ' weeks max value'
+            LAST_N_WEEKS_MAX_DATE = 'Last ' + str(n) + ' weeks max date'
+            PRICE_DIFF_NWH = 'Price diff wrt last ' + str(n) + ' weeks high'
+            DISTANCE_FROM_NWH = 'Distance in days from last ' + str(n) + ' weeks high'
+
+            LAST_N_WEEKS_MIN_VALUE = 'Last ' + str(n) + ' weeks min value'
+            LAST_N_WEEKS_MIN_DATE = 'Last ' + str(n) + ' weeks min date'
+            PRICE_DIFF_NWL = 'Price diff wrt last ' + str(n) + ' weeks low'
+            DISTANCE_FROM_NWL = 'Distance in days from last ' + str(n) + ' weeks low'
+
+            output_df_with_past_n_weeks_data = output_df[['Stock Symbol', 'Industry', 'Current Price',
+             LAST_N_WEEKS_MAX_VALUE, LAST_N_WEEKS_MAX_DATE, PRICE_DIFF_NWH, DISTANCE_FROM_NWH,
+             LAST_N_WEEKS_MIN_VALUE, LAST_N_WEEKS_MIN_DATE, PRICE_DIFF_NWL, DISTANCE_FROM_NWL]]
+            output_df_with_past_n_weeks_data.to_excel(writer, sheet_name="Past " + str(n) + " Weeks Stats", index=False)
+
+        column_list_for_price_movement_data = ['Stock Symbol', 'Industry', 'Current Price']
+        for n in week_list_for_price_movement:
+            PRICE_N_WEEKS_BACK = 'Price ' + str(n) + ' weeks back'
+            PRICE_MOVEMENT_IN_N_WEEKS = 'Price movement in ' + str(n) + ' weeks'
+
+            column_list_for_price_movement_data.append(PRICE_N_WEEKS_BACK)
+            column_list_for_price_movement_data.append(PRICE_MOVEMENT_IN_N_WEEKS)
+
+        output_df_with_past_few_weeks_price_movement = output_df.filter(column_list_for_price_movement_data)
+        output_df_with_past_few_weeks_price_movement.to_excel(writer, sheet_name="Past Few Weeks Price Movement", index=False)
+
+
     print('Successfully wrote breakout point data for all listed NSE and BSE stocks to: '
-          + os.getcwd() + '/StockData/Output/BreakoutPointData.xlsx')
+          + os.getcwd() + '/StockData/Output/1_BreakoutPointData.xlsx')
 
 
 if __name__ == '__main__':
     # deduplicate_stock_symbols()
     # download_historical_stock_data()
     # plot_and_save_historical_stock_data()
-    find_and_save_breakout_points()
-
+    find_and_save_breakout_points(week_list_for_past_stats = [26, 52], week_list_for_price_movement = [26, 99])
