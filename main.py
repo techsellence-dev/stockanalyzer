@@ -118,7 +118,7 @@ def write_dict_to_file(kv_dict, file_name):
         output_file.write(str(kv_dict))
 
 
-def find_and_save_breakout_points(week_list_for_past_stats, week_list_for_price_movement):
+def find_and_save_breakout_points(week_list_for_past_stats, week_list_for_price_movement, days_list_for_moving_average):
     row_list = []
     global stock_symbol
     stocks_df = pd.read_csv(os.getcwd() + '/StockData/Output/DedupedStockSymbols')
@@ -132,7 +132,7 @@ def find_and_save_breakout_points(week_list_for_past_stats, week_list_for_price_
             breakout_details_dict = {'Stock Symbol': stock_symbol, 'Industry': industry}
             breakout_details_dict.update(ticker_info_updater.update_ticker_info(stock_symbol))
             breakout_details_dict.update(breakout_point_finder.find_breakout_point(stock_symbol,
-                        week_list_for_past_stats, week_list_for_price_movement))
+                        week_list_for_past_stats, week_list_for_price_movement, days_list_for_moving_average))
             row_list.append(breakout_details_dict)
         except Exception as e:
             print('Could not derive past max prices for symbol: ' + stock_symbol + ' due to data unavailability, '
@@ -204,7 +204,15 @@ def find_and_save_breakout_points(week_list_for_past_stats, week_list_for_price_
         output_df_with_past_few_weeks_price_movement = output_df.filter(column_list_for_price_movement_data)
         output_df_with_past_few_weeks_price_movement.to_excel(writer, sheet_name="Past Few Weeks Price Movement", index=False)
 
-
+        column_list_for_dma_data = ['Stock Symbol', 'Industry', 'Current Price']
+        for n in days_list_for_moving_average:
+            LAST_N_DAYS_PRICE_AVG = "Last " + str(n) + " days price average"
+            PRICE_MOVEMENT_FROM_LAST_N_DAYS_AVERAGE = "Price movement from last " + str(n) + " days average"
+            column_list_for_dma_data.append(LAST_N_DAYS_PRICE_AVG)
+            column_list_for_dma_data.append(PRICE_MOVEMENT_FROM_LAST_N_DAYS_AVERAGE)
+        output_df_with_dma_data = output_df.filter(column_list_for_dma_data)
+        output_df_with_dma_data.to_excel(writer, sheet_name="Past Few Days Price Average",
+                                                              index=False)
     print('Successfully wrote breakout point data for all listed NSE and BSE stocks to: '
           + os.getcwd() + '/StockData/Output/1_BreakoutPointData.xlsx')
 
@@ -213,4 +221,6 @@ if __name__ == '__main__':
     # deduplicate_stock_symbols()
     # download_historical_stock_data()
     # plot_and_save_historical_stock_data()
-    find_and_save_breakout_points(week_list_for_past_stats = [26, 52], week_list_for_price_movement = [26, 99])
+    find_and_save_breakout_points(week_list_for_past_stats = [26, 52],
+                                  week_list_for_price_movement = [26, 99],
+                                  days_list_for_moving_average = [200, 500])

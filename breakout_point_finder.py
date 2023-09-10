@@ -85,7 +85,16 @@ def find_difference_from_current_date(all_time_max_date):
     return (datetime.datetime.now() - datetime.datetime.strptime(all_time_max_date, "%Y-%m-%d")).days
 
 
-def find_breakout_point(stock_symbol, week_list_for_past_stats, week_list_for_price_movement):
+def get_last_n_days_price_average(historical_stock_df, n):
+    today = datetime.datetime.today()
+    date_before_n_days = datetime.datetime.date(today - datetime.timedelta(days=n))
+    historical_stock_df['DateNew'] = historical_stock_df['Date']
+    historical_stock_df.DateNew = historical_stock_df.DateNew.apply(lambda x: x.date())
+    historical_stock_df_n_days_back = historical_stock_df.loc[historical_stock_df['DateNew'] >= date_before_n_days]
+    return historical_stock_df_n_days_back['Close'].mean()
+
+
+def find_breakout_point(stock_symbol, week_list_for_past_stats, week_list_for_price_movement, days_list_for_moving_average):
     past_data_dict = {}
     output_dir = os.getcwd() + '/StockData/Output/' + stock_symbol
     output_data_path = output_dir + '/historical_data'
@@ -222,6 +231,15 @@ def find_breakout_point(stock_symbol, week_list_for_past_stats, week_list_for_pr
             past_data_dict[PRICE_N_WEEKS_BACK] = price_n_weeks_back
             past_data_dict[PRICE_MOVEMENT_IN_N_WEEKS] = price_movement_in_n_weeks
 
+        for n in days_list_for_moving_average:
+            LAST_N_DAYS_PRICE_AVG = "Last " + str(n) + " days price average"
+            PRICE_MOVEMENT_FROM_LAST_N_DAYS_AVERAGE = "Price movement from last " + str(n) + " days average"
+
+            last_n_days_price_avg = get_last_n_days_price_average(historical_stock_df, n)
+            price_movement_from_last_n_days_average = find_difference_from_current_price(last_n_days_price_avg, current_price)
+
+            past_data_dict[LAST_N_DAYS_PRICE_AVG] = last_n_days_price_avg
+            past_data_dict[PRICE_MOVEMENT_FROM_LAST_N_DAYS_AVERAGE] = price_movement_from_last_n_days_average
         print('Stock Symbol: ' + stock_symbol + ', past data: ' + str(past_data_dict))
         return past_data_dict
     except Exception as e:
